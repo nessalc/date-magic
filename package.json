@@ -1,0 +1,28 @@
+{
+  "name": "date-magic",
+  "version": "1.0.0-alpha.1",
+  "description": "A JavaScript library for fiddling with and calculating dates",
+  "main": "date-magic.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nessalc/date-magic.git"
+  },
+  "keywords": [
+    "date",
+    "dates"
+  ],
+  "author": "nessalc",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nessalc/date-magic/issues"
+  },
+  "homepage": "https://github.com/nessalc/date-magic#readme",
+  "dependencies": {
+    "jquery": "^3.1.1",
+    "date-utils": "^1.2.x",
+    "requirejs": "^2.3.2"
+  }
+}
