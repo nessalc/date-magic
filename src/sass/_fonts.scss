@@ -1,0 +1,112 @@
+/*
+Favorite fonts:
+Sans
+	Cabin
+	Raleway
+	Josefin Sans
+	Alegreya Sans
+	Mallanna
+	Marvel
+	News Cycle
+	Open Sans
+	Open Sans Condensed
+Serif
+	Adamina
+	Bitter
+	Brawler
+	Buenard
+	Cambo
+	Cardo
+	Caudex
+	Comorant
+	Fjord One
+	Gentium Basic
+	Habibi
+	Montaga
+	Rosarivo
+	Trirong
+	Vesper Libre
+	Vollkorn
+	Yrsa
+Stylish
+	Sans
+		Aclonica
+		Acme
+		Amaranth
+		Bubbler One
+		Cagliostro
+		Federo
+		Philosopher
+		Original Surfer
+		Overlock
+		Macondo
+		Poiret One
+		Pompiere
+	Serif
+		IM Fell English
+		Laila
+		Lancelot
+		Mountains of Christmas
+		Nixie One
+		Love Ya Like A Sister
+		Life Savers
+		Kranky
+		Henny Penny
+		Fredericka the Great
+		Smythe
+		Special Elite
+Script
+	Allura
+	Annie Use Your Telescope
+	Architects Daughter
+	Bilbo
+	Playball
+	Seaweed Script
+	Dynalight
+	Qwigley
+	Zeyada
+	Waiting for the Sunrise
+
+Import Rule Examples
+	One:
+		@import url('https://fonts.googleapis.com/css?family=Cabin');
+	More:
+		@import url('https://fonts.googleapis.com/css?family=Cabin|Raleway');
+*/
+@import url('https://fonts.googleapis.com/css?family=Cabin|Raleway');
+
+$body-font: 'Raleway', sans-serif;
+$header-font: 'Cabin', sans-serif;
+
+$font-size-pt: 12;
+$font-ratio: 4/3;
+$font-scalar: 1.1649930507507129700024711613129; //sixth root of 2.5
+$line-height-em: 1.15;
+
+$base-font-size: #{$font-size-pt * $font-ratio}px;
+$base-line-height: #{$font-size-pt * $line-height-em * $font-ratio}px;
+
+body {
+	font: #{$base-font-size}/1.15 $body-font;
+}
+
+%my-headings {
+	font-weight: bold;
+	font-family: $header-font;
+	margin: 0 0 0.25em;
+}
+
+@function intpower($number, $power) {
+	$val: $number;
+	@for $counter from 1 to $power {
+		$val: $val * $number
+	}
+	@return $val;
+}
+
+@for $i from 1 through 6 {
+	h#{$i} {
+		@extend %my-headings;
+		font-size: #{intpower($font-scalar, 7 - $i)}em;
+	}
+}

@@ -1,0 +1,13 @@
+$body-font: Helvetica, sans-serif;
+$header-font: Times, serif;
+
+$font-size-pt: 12;
+$font-ratio: 4/3;
+$line-height-em: 1.15;
+
+$base-font-size: #{$font-size-pt * $font-ratio}px;
+$base-line-height: #{$font-size-pt * $line-height-em * $font-ratio}px;
+
+body {
+	font: #{$base-font-size}/#{$base-line-height};
+}

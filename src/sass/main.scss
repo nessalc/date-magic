@@ -1,0 +1,17 @@
+@import "fonts";
+@import "my_mixins";
+
+$primary-color: #333;
+$background-color: #ccc;
+
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+	margin: 0;
+	color: $primary-color;
+	background: red;
+	@include prefix_function((background: linear-gradient(to bottom right, red, orange, yellow, green, blue, purple)));
+}
