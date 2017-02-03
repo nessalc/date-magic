@@ -165,7 +165,7 @@ class DateMagic {
 	}
 	set epoch(epoch) {
 		r=/[BJ]\d+(?:\.\d+)?|JDN\s*\d+(?:\.\d+)/;
-		this.epoch=r.exec(epoch)[0] || 'J2000';
+		this._epoch=r.exec(epoch)[0] || 'J2000';
 	}
 	//representation
 	toISOString() { //goal is ISO8601 string
@@ -185,6 +185,12 @@ class DateMagic {
 		}
 		return isostring;
 	}
+	toNiceString() { //this one is mostly for me
+		var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+		var nicestring;
+		nicestring=dow[this.dayOfWeek()%7]+' '+this.day+' '+months[this.month-1]+' '+this.year;
+		return nicestring;
+	}
 	toString() {
 		return this.toISOString();
 	}
@@ -200,7 +206,7 @@ class DateMagic {
 			this._millisecond,
 			this._offset,
 			this._julian,
-			this.epoch);
+			this._epoch);
 	}
 	leapYear() {
 		var calcyear,ly;
@@ -224,7 +230,7 @@ class DateMagic {
 		return ly;
 	}
 	static computus(year, julian = false) {
-		var a,b,c,k,p,q,M,N,d,e,day,time;
+		var a,b,c,k,p,q,M,N,d,e,day,time,D;
 		time=[null,null,null,null,0];
 		a=mod(year,19);
 		b=mod(year,4);
@@ -247,12 +253,9 @@ class DateMagic {
 		if (d==28 && e==6 && mod(11 * M + 11, 30) < 19) {
 			return new DateMagic(year,4,18,...time,julian);
 		}
-		day=22+d+e;
-		if (day<=31) {
-			return new DateMagic(year,3,22+d+e,...time,julian);
-		} else {
-			return new DateMagic(year,4,d+e-9,...time,julian);
-		}
+		D=new DateMagic(year,3,22,...time,julian);
+		D.day+=(d+e);
+		return D;
 	}
 	toJulianDayNumber() {
 		var jdn,a,y,m;
@@ -284,35 +287,35 @@ class DateMagic {
 		if (this._julian) {
 			return DateMagic.dateFromJulianDayNumber(this.toJulianDayNumber());
 		} else {
-			return this;
+			return this.clone();
 		}
 	}
 	toJulian() {
 		if (this._julian) {
-			return this;
+			return this.clone();
 		} else {
 			return DateMagic.dateFromJulianDayNumber(this.toJulianDayNumber(),true);
 		}
 	}
+	static getCurrent() {
+		return new DateMagic(new Date());
+	}
 	static dateFromJulianDayNumber(jdn,julian) {
-		julian=julian || false;
-		var y=4716,j=1401,m=2,n=12,r=4,p=1461,v=3,u=5,s=153,w=2,B=274277,C=-38;
-		var time=mod(jdn,1);
-		var e,g,h,D,M,Y,dm;
-		if (julian) {
-			f=jdn+j;
-		} else {
-			f=jdn+j+Math.floor((Math.floor((4*jdn+B)/146097)*3)/4)+C;
-		}
-		e=r*f+v;
-		g=Math.floor(mod(e,p)/r);
-		h=u*g+w;
-		D=Math.floor(mod(h,s)/u)+1;
-		M=mod(Math.floor(h/s)+m,n)+1;
-		Y=Math.floor(e/p)-y+Math.floor((n+m-M)/n);
-		dm=new DateMagic(Y,M,D);
-		dm.hour+=time*24;
-		return dm;
+		var a,b,c,d,e,f,g,h,i,j,Y,M,D;
+		a=Math.floor(jdn-1721425.5); //1721425.5 is Julian Day Number of 0000-01-01
+		b=Math.floor(a/146097);
+		c=mod(a,146097);
+		d=Math.floor(c/36524);
+		e=mod(c,36524);
+		f=Math.floor(e/1461);
+		g=mod(e,1461);
+		h=Math.floor(g/365);
+		Y=b*400+d*100+f*4+h;
+		if(!((d==4)||(h==4))) Y++;
+		i=new DateMagic(Y,1,1);
+		j=i.toJulianDayNumber();
+		i.day+=(Math.floor(jdn-0.5)+0.5-j);
+		return i;
 	}
 	static getEpochFromJulianDayNumber(jdn,type) {
 		var e;
@@ -358,5 +361,160 @@ class DateMagic {
 			dm.day-=7;
 		}
 		return dm;
+	}
+	moonAge(referenceDate) { //decent baseline, want to implement ELP 2000-82 if possible
+		var refJDN;
+		var synodic_month_length=29.530588853;
+		referenceDate=referenceDate || new DateMagic(2017,1,28,0,7);
+		refJDN=referenceDate.toJulianDayNumber();
+		return mod(this.toJulianDayNumber()-refJDN,synodic_month_length);
+	}
+	moonPhase(referenceDate) {
+		var ma=this.moonAge(referenceDate),phase;
+		var synodic_month_length=29.530588853;
+		if (ma>synodic_month_length-1.5 || ma<=1.5) {
+			phase='new';
+		} else if (ma>1.5 && ma<=synodic_month_length/4-1.5) {
+			phase='waxing crecent';
+		} else if (ma>synodic_month_length/4-1.5 && ma<=synodic_month_length/4+1.5) {
+			phase='first quarter';
+		} else if (ma>synodic_month_length/4+1.5 && ma<=synodic_month_length/2-1.5) {
+			phase='waxing gibbous';
+		} else if (ma>synodic_month_length/2-1.5 && ma<=synodic_month_length/2+1.5) {
+			phase='full';
+		} else if (ma>synodic_month_length/2+1.5 && ma<=3*synodic_month_length/2-1.5) {
+			phase='waning gibbous';
+		} else if (ma>3*synodic_month_length/4-1.5 && ma<=3*synodic_month_length/4+1.5) {
+			phase='last quarter';
+		} else if (ma>3*synodic_month_length/4+1.5 && ma<=3*synodic_month_length/4-1.5) {
+			phase='waning crecent';
+		}
+		return phase;
+	}
+	moonAngle(referenceDate) {
+		var ma=this.moonAge(referenceDate),phase;
+		var synodic_month_length=29.530588853;
+		return ma/synodic_month_length*360;
+	}
+	clearTime() {
+		this._hour=null;
+		this._minute=null;
+		this._second=null;
+		this._millisecond=null;
+		return this;
+	}
+	static nthWeekdayOfMonth(year,month,n,weekday) {
+		var temp=new DateMagic(year,month,1);
+		if(n===0) n=1;
+		if(n>0) {
+			temp=temp.nextWeekday(weekday);
+			temp.day+=(7*(n-1));
+		} else if(n<0) {
+			temp.month+=1;
+			temp=temp.prevWeekday(weekday,true);
+			temp.day+=(7*(n+1));
+		}
+		return temp;
+	}
+	nthWeekday(n,weekday) {
+		temp=this.clone();
+		if(n===0) n=1;
+		if(n>0) {
+			temp=temp.nextWeekday(weekday);
+			temp.day+=(7*(n-1));
+		} else if(n<0) {
+			temp.month+=1;
+			temp=temp.prevWeekday(weekday,true);
+			temp.day+=(7*(n+1));
+		}
+		return temp;
+	}
+	ISOdayNumber() {
+		var firstDay=DateMagic.nthWeekdayOfMonth(this.year,1,1,4).prevWeekday(1);
+		return Math.floor(this.toJulianDayNumber()-firstDay.toJulianDayNumber()+1);
+	}
+	dayNumber() {
+		return Math.floor(this.toJulianDayNumber()-(new DateMagic(this.year,1,1)).toJulianDayNumber()+1);
+	}
+	ISOweekNumber() { //iso week number, first week contains first Thursday
+		var cleartime=[null,null,null,null,null,this.julian];
+		var firstDay=DateMagic.nthWeekdayOfMonth(this.year,1,1,4).prevWeekday(1);
+		var days=this.toJulianDayNumber()-firstDay.toJulianDayNumber()+1;
+		var week=Math.sign(days)*Math.abs(Math.ceil(days/7));
+		if(week===0) {
+			return (new DateMagic(this.year-1,12,31,...cleartime)).weekNumber();
+		} else if(week==53) {
+			var lastweek=(new DateMagic(this.year,12,31,...cleartime)).weekNumber();
+		}
+		return week;
+	}
+	daysInMonth() {
+		var monthlen=[31,28+this.leapYear(),31,30,31,30,31,31,30,31,30,31];
+		return monthlen[this.month-1];
+	}
+	add(date) {
+		if(typeof(date)=='object' && date!==null) {
+			this.milliseconds+=date.milliseconds;
+			this.seconds+=date.seconds;
+			this.minutes+=date.minutes;
+			this.hour+=date.hour;
+			this.day+=date.day;
+			this.month+=date.month;
+			this.year+=date.year;
+		} else if(typeof(date)=='number' && !isNaN(date) && date != Infinity) {
+			this.day+=date;
+		} else {
+			throw DMException(-1,"Incorrect object passed to function. Expected DateMagic or Number.");
+		}
+		return this;
+	}
+	subtract(date) {
+		if(typeof(date)=='object' && date!==null) {
+			this.year-=date.year;
+			this.month-=date.month;
+			this.day-=date.day;
+			this.hour-=date.hour;
+			this.minutes-=date.minutes;
+			this.seconds-=date.seconds;
+			this.milliseconds-=date.milliseconds;
+		} else if(typeof(date)=='number' && !isNaN(date) && date != Infinity) {
+			this.day-=date;
+		} else {
+			throw DMException(-1,"Incorrect object passed to function. Expected DateMagic or Number.");
+		}
+		return this;
+	}
+	compare(date) {
+		if (typeof(date)=='object' && date!==null) {
+			a=this.toJulianDayNumber();
+			b=date.toJulianDayNumber();
+			if (a<b) {
+				return 1;
+			} else if (a==b) {
+				return 0;
+			} else {
+				return -1;
+			}
+		} else {
+			throw DMException(-1,"Incorrect object passed to function. Expected DateMagic.");
+		}
+	}
+	//sunrise
+	//sunset
+	//solar noon
+	//moonrise
+	//moonset
+	//lunar noon?
+	//toString
+	//between
+	//dst
+}
+class DMException {
+	constructor(number,message) {
+		this.number=number;
+		this.message=message;
+	}
+	toString() {
+		return number + ' ' + message;
 	}
 }

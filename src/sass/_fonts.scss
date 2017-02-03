@@ -18,7 +18,6 @@ Serif
 	Cambo
 	Cardo
 	Caudex
-	Comorant
 	Fjord One
 	Gentium Basic
 	Habibi
@@ -73,10 +72,11 @@ Import Rule Examples
 	More:
 		@import url('https://fonts.googleapis.com/css?family=Cabin|Raleway');
 */
-@import url('https://fonts.googleapis.com/css?family=Cabin|Raleway');
+@import url('https://fonts.googleapis.com/css?family=Gentium+Basic|Lato|Share+Tech+Mono');
 
-$body-font: 'Raleway', sans-serif;
-$header-font: 'Cabin', sans-serif;
+$body-font: 'Lato', sans-serif;
+$header-font: 'Gentium Basic', serif;
+$fixed-font: 'Share Tech Mono', monospace;
 
 $font-size-pt: 12;
 $font-ratio: 4/3;
@@ -90,10 +90,15 @@ body {
 	font: #{$base-font-size}/1.15 $body-font;
 }
 
+code,pre,tt,kbd,samp {
+	font-family: $fixed-font;
+	background: rgba(255,255,255,.25);
+}
+
 %my-headings {
 	font-weight: bold;
 	font-family: $header-font;
-	margin: 0 0 0.25em;
+	margin: 0 0 0.25rem;
 }
 
 @function intpower($number, $power) {
@@ -107,6 +112,6 @@ body {
 @for $i from 1 through 6 {
 	h#{$i} {
 		@extend %my-headings;
-		font-size: #{intpower($font-scalar, 7 - $i)}em;
+		font-size: #{intpower($font-scalar, 7 - $i)}rem;
 	}
 }
