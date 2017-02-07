@@ -54,6 +54,9 @@ class DateMagic {
 	get minute() {
 		return this._minute;
 	}
+	get offset() {
+		return this._offset;
+	}
 	get minutes() {
 		return this._minute;
 	}
@@ -93,13 +96,13 @@ class DateMagic {
 		}
 	}
 	set day(day) {
-		var monthlen=[31,28+this.leapYear(),31,30,31,30,31,31,30,31,30,31];
+		var monthlen=[31,28+this.leapYear,31,30,31,30,31,31,30,31,30,31];
 		if (Number.isInteger(day) && day>0) {
 			while (day>monthlen[this._month-1]) {
 				day-=monthlen[this._month-1];
 				this.month+=1;
 				if (this._month==1) {
-					monthlen[1]=28+this.leapYear();
+					monthlen[1]=28+this.leapYear;
 				}
 			}
 			this._day=day;
@@ -108,7 +111,7 @@ class DateMagic {
 				day+=monthlen[mod(this._month-2,12)];
 				this.month-=1;
 				if (this._month==12) {
-					monthlen[1]=28+this.leapYear();
+					monthlen[1]=28+this.leapYear;
 				}
 			}
 			this._day=day;
@@ -131,6 +134,9 @@ class DateMagic {
 			this.minute+=60*mod(hour,1);
 		}
 	}
+	set hours(hours) {
+		this.hour=hours;
+	}
 	set minute(minute) {
 		if (Number.isInteger(minute)) {
 			this._hour=this._hour || 0;
@@ -141,6 +147,12 @@ class DateMagic {
 			this.minute=Math.floor(minute);
 			this.second=60*mod(minute,1);
 		}
+	}
+	set minutes(minutes) {
+		this.minute=minutes;
+	}
+	set offset(minutes) {
+		this._offset=minutes;
 	}
 	set second(second) {
 		if (Number.isInteger(second)) {
@@ -153,12 +165,18 @@ class DateMagic {
 			this.millisecond=1000*mod(second,1);
 		}
 	}
+	set seconds(seconds) {
+		this.second=seconds;
+	}
 	set millisecond(millisecond) {
 		this._hour=this._hour || 0;
 		this._minute=this._minute || 0;
 		this._second=this._second || 0;
 		this.second+=Math.floor(millisecond/1000);
 		this._millisecond=mod(millisecond,1);
+	}
+	set milliseconds(milliseconds) {
+		this.millisecond=milliseconds;
 	}
 	set julian(julian) {
 		this._julian=julian ? true : false;
@@ -188,7 +206,7 @@ class DateMagic {
 	toNiceString() { //this one is mostly for me
 		var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 		var nicestring;
-		nicestring=dow[this.dayOfWeek()%7]+' '+this.day+' '+months[this.month-1]+' '+this.year;
+		nicestring=dow[this.dayOfWeek%7]+' '+this.day+' '+months[this.month-1]+' '+this.year;
 		return nicestring;
 	}
 	toString() {
@@ -208,7 +226,7 @@ class DateMagic {
 			this._julian,
 			this._epoch);
 	}
-	leapYear() {
+	get leapYear() {
 		var calcyear,ly;
 		calcyear=Math.floor(this.year)+(this.year<0);
 		if (this._julian) {
@@ -326,7 +344,7 @@ class DateMagic {
 		}
 		return e;
 	}
-	dayOfWeek() {
+	get dayOfWeek() {
 		//implements Zeller's congruence
 		//ISO weekday: 1=Monday, 7=Sunday
 		var h,q,m,Y,dow;
@@ -341,7 +359,7 @@ class DateMagic {
 		return mod(h+5,7)+1;
 	}
 	nextWeekday(weekday,excludeThis) {
-		var dow=this.dayOfWeek(),dm;
+		var dow=this.dayOfWeek,dm;
 		dm=this.clone();
 		excludeThis=excludeThis ? true : false;
 		if (weekday!=dow) {
@@ -352,7 +370,7 @@ class DateMagic {
 		return dm;
 	}
 	prevWeekday(weekday,excludeThis) {
-		var dow=this.dayOfWeek(),dm;
+		var dow=this.dayOfWeek,dm;
 		dm=this.clone();
 		excludeThis=excludeThis ? true : false;
 		if (weekday!=dow) {
@@ -370,6 +388,12 @@ class DateMagic {
 		return mod(this.toJulianDayNumber()-refJDN,synodic_month_length);
 	}
 	moonPhase(referenceDate) {
+		var ma=this.moonAge(referenceDate),phase;
+		var synodic_month_length=29.530588853;
+		phase=ma/synodic_month_length*2;
+		return phase;
+	}
+	moonPhaseName(referenceDate) {
 		var ma=this.moonAge(referenceDate),phase;
 		var synodic_month_length=29.530588853;
 		if (ma>synodic_month_length-1.5 || ma<=1.5) {
@@ -391,10 +415,24 @@ class DateMagic {
 		}
 		return phase;
 	}
-	moonAngle(referenceDate) {
+	moonPhaseAngle(referenceDate) {
 		var ma=this.moonAge(referenceDate),phase;
 		var synodic_month_length=29.530588853;
-		return ma/synodic_month_length*360;
+		return ma/synodic_month_length*360-180;
+	}
+	nextMolad(referenceDate) {
+		var synodic_month_length=29.530594135802469135802469135802;
+		referenceDate=referenceDate || new DateMagic(2017,1,28,0,7);
+		var refJDN=referenceDate.toJulianDayNumber();
+		var temp=this.clone();
+		return temp.add(synodic_month_length-mod(this.toJulianDayNumber()-refJDN,synodic_month_length));
+	}
+	prevMolad(referenceDate) {
+		var synodic_month_length=29.530594135802469135802469135802;
+		referenceDate=referenceDate || new DateMagic(2017,1,28,0,7);
+		var refJDN=referenceDate.toJulianDayNumber();
+		var temp=this.clone();
+		return temp.subtract(mod(this.toJulianDayNumber()-refJDN,synodic_month_length));
 	}
 	clearTime() {
 		this._hour=null;
@@ -449,14 +487,14 @@ class DateMagic {
 		return week;
 	}
 	daysInMonth() {
-		var monthlen=[31,28+this.leapYear(),31,30,31,30,31,31,30,31,30,31];
+		var monthlen=[31,28+this.leapYear,31,30,31,30,31,31,30,31,30,31];
 		return monthlen[this.month-1];
 	}
 	add(date) {
 		if(typeof(date)=='object' && date!==null) {
-			this.milliseconds+=date.milliseconds;
-			this.seconds+=date.seconds;
-			this.minutes+=date.minutes;
+			this.millisecond+=date.millisecond;
+			this.second+=date.second;
+			this.minute+=date.minute;
 			this.hour+=date.hour;
 			this.day+=date.day;
 			this.month+=date.month;
@@ -474,9 +512,9 @@ class DateMagic {
 			this.month-=date.month;
 			this.day-=date.day;
 			this.hour-=date.hour;
-			this.minutes-=date.minutes;
-			this.seconds-=date.seconds;
-			this.milliseconds-=date.milliseconds;
+			this.minute-=date.minute;
+			this.second-=date.second;
+			this.millisecond-=date.millisecond;
 		} else if(typeof(date)=='number' && !isNaN(date) && date != Infinity) {
 			this.day-=date;
 		} else {
@@ -485,6 +523,7 @@ class DateMagic {
 		return this;
 	}
 	compare(date) {
+		var a,b;
 		if (typeof(date)=='object' && date!==null) {
 			a=this.toJulianDayNumber();
 			b=date.toJulianDayNumber();
@@ -499,6 +538,77 @@ class DateMagic {
 			throw DMException(-1,"Incorrect object passed to function. Expected DateMagic.");
 		}
 	}
+	isBetween(date1,date2) {
+		var a,b,c;
+		if (typeof(date1)=='object' && date1!==null && typeof(date2)=='object' && date2!==null) {
+			a=date1.toJulianDayNumber();
+			b=this.toJulianDayNumber();
+			c=date2.toJulianDayNumber();
+			if (a<=b && b<=c) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			throw DMException(-1,"Incorrect object(s) passed to function. Expected DateMagic.");
+		}
+	}
+	toLocal() {
+		var temp=this.clone();
+		temp.minute+=this._offset;
+		return temp;
+	}
+	static hebrewLeapYear(year) {
+		return mod(((year*7)+1),19)<7;
+	}
+	/*
+	static hebrewMonthLengths(year) {
+		var monthlen=[30,29,30,29,30,29,30,29,30,29,30,29];
+		if (hebrewLeapYear(year)) {
+			monthlen[11]=30;
+			monthlen[12]=29;
+		}
+		var months,days,parts,last,present,next;
+		//delay1
+		months=Math.floor(((235*year)-234)/19);
+		parts=12084+(13753*months);
+		day=(months*29)+Math.floor(parts/25920);
+		if (mod((3*(day+1)),7)<3) day++;
+		return day;
+		//delay2
+		last=delay1(year-1);
+		present=delay1(year);
+		next=delay1(year+1);
+		if ((next-present)==356) {
+			return 2;
+		} else if ((present-last)==382) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	*/
+	/*
+	static hebrewToJulianDayNumber(year,month,day) {
+		var monthlen=return hebrewMonthLengths();
+		var jd,mon,months;
+		months=hebrewLeapYear?13:12;
+		jd=347995.5+hebrew_delay_1(year)+hebrew_delay2(year)+day+1;
+		if (month<7) {
+			for(mon=7;mon<=months;mon++) {
+				jd+=hebrew_month_days(year,mon);
+			}
+			for(mon=1;mon<month;mon++) {
+				jd+=hebrew_month_days(year,mon);
+			}
+		} else {
+			for(mon=7;mon<month;mon++) {
+				jd+=hebrew_month_days(year,mon);
+			}
+		}
+		return jd;
+	}
+	*/
 	//sunrise
 	//sunset
 	//solar noon
